@@ -3,21 +3,43 @@
 library(tidyverse)
 library(stringr)
 
-setwd("D:/OneDrive/GEM3_PostDoc/Review Paper AM")
+#data prep: need to remove all non-text data from the file list
 
-animals <- read.csv("animals.csv", header = TRUE)
-aq_marine <- read.csv("aquatic_marine.csv", header = TRUE)
+#bring in each file individually. doing this to make it easier to edit as necessary (as opposed to looping rbinding)
+animals <- read.csv("data/animals.csv", header = TRUE)
+animals_NR <- read.csv("data/animals_not_relevant.csv", header = TRUE)
+aq_marine <- read.csv("data/aquatic_marine.csv", header = TRUE)
+aq_marine_NR <- read.csv("data/aquatic_marine_not_relevant.csv", header = TRUE)
+plants <- read.csv("data/plants.csv", header = TRUE)
+plants_NR <- read.csv("data/plants_not_relevant.csv", header = TRUE)
 
+#add category tag
 animals$Cat <- c("Animals")
+animals_NR$Cat <- c("Animals")
 aq_marine$Cat <- c("Aquatic and Marine")
+aq_marine_NR$Cat <- c("Aquatic and Marine")
+plants$Cat <- c("Plants")
+plants_NR$Cat <- c("Plants")
 
-df <- rbind(animals, aq_marine)
+
+df <- rbind(animals, animals_NR, aq_marine, aq_marine_NR, plants, plants_NR)
+
+df$Score <- df$Notes
 
 df_plot <- df %>%
+  filter(!is.na(Notes)) %>%
+  filter(Notes != "1") %>%
+  filter(Notes != "") %>%
+  filter(Notes != "b") %>%
   group_by(Cat, Score) %>%
   tally()
 
 df_plot$Score <- as.factor(df_plot$Score)
+
+#Add in NA for zeroes to get consistant width, missing Animals 4
+animals_4 <- data.frame("Animals", as.factor(4), 0)
+colnames(animals_4) <- c("Cat", "Score", "n")
+df_plot <- rbind(df_plot, animals_4)
 
 ggplot(data = df_plot, aes(x=Cat, y = n, fill = Score)) +
   geom_col(position = "dodge", colour="black") +
@@ -26,5 +48,5 @@ ggplot(data = df_plot, aes(x=Cat, y = n, fill = Score)) +
     x = "Category",
     y = "Count") +
   scale_y_continuous(expand = c(0,0),
-                     limits = c(0,7)) +
-  theme_classic(base_size = 18)
+                     limits = c(0,50)) +
+  theme_classic(base_size = 16)
