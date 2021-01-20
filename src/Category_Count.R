@@ -49,4 +49,29 @@ ggplot(data = df_plot, aes(x=Cat, y = n, fill = Score)) +
     y = "Count") +
   scale_y_continuous(expand = c(0,0),
                      limits = c(0,50)) +
-  theme_classic(base_size = 16)
+  theme_classic(base_size = 18)
+
+
+#could also graph through time for each category
+df_plot_time <- df %>%
+  filter(!is.na(Notes)) %>%
+  filter(Notes != "1") %>%
+  filter(Notes != "") %>%
+  filter(Notes != "b") %>%
+  group_by(Cat, Score, Publication.Year) %>%
+  tally()
+
+df_plot_time2 = df_plot_time %>% group_by(Cat, Score) %>% arrange(Publication.Year) %>% mutate(cs = cumsum(n))
+
+#problem here is that cumulative sum for the publication counts is missing whatever the max was
+
+
+
+ggplot(data = df_plot_time2, aes(x=Publication.Year, y = cs, color = Score)) +
+  geom_line(size = 2) +
+  scale_color_brewer(palette = "Accent") +
+  facet_wrap(~Cat) +
+  labs(
+    x = "Year",
+    y = "Cumulative Count") +
+  theme_classic(base_size = 18)
