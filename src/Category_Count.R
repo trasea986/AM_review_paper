@@ -75,3 +75,12 @@ ggplot(data = df_plot_time2, aes(x=Publication.Year, y = cs, color = Score)) +
     x = "Year",
     y = "Cumulative Count") +
   theme_classic(base_size = 18)
+
+ggplot(data = df_plot_time2, aes(x=Publication.Year, y = n, color = Score)) +
+  geom_line(size = 2) +
+  scale_color_brewer(palette = "Accent") +
+  facet_wrap(~Cat) +
+  labs(
+    x = "Year",
+    y = "Cumulative Count") +
+  theme_classic(base_size = 18)
