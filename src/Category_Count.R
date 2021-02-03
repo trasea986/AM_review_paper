@@ -26,24 +26,37 @@ df <- rbind(animals, animals_NR, aq_marine, aq_marine_NR, plants, plants_NR)
 
 df$Score <- df$Notes
 
-df_plot <- df %>%
-  filter(!is.na(Notes)) %>%
-  filter(Notes != "1") %>%
-  filter(Notes != "") %>%
-  filter(Notes != "b") %>%
+write.csv(df, "outputs/all_reviewed.csv", row.names = FALSE)
+
+#pulling out just the 2, 3, 4 and "a"
+
+df_234 <- NULL
+df_234 <- rbind(df_234, df[grepl("2", df$Notes),])
+df_234 <- rbind(df_234, df[grepl("3a", df$Notes),])
+df_234 <- rbind(df_234, df[grepl("3", df$Notes),])
+df_234 <- rbind(df_234, df[grepl("4a", df$Notes),])
+df_234 <- rbind(df_234, df[grepl("4", df$Notes),])
+
+#note, need to wipe the rest of the text out of the file. for now, just exporting an d reading back in. note also that some of the files had other numebrs in them (like animals has a paper scored 1, but the note had 4 in it due to pop number). Manual review occured using the "Score" column". Also, above grep keeps 3b and 4b in there due to looking for "3" and "4" will need to adjust grepl later. Put "0" for anything that didn't belong
+
+write.csv(df_234, "outputs/df_234_full_note.csv", row.names = FALSE)
+
+df_234_clean <- read.csv("outputs/df_234_full_note.csv")
+
+#filter out zeros and tally
+
+df_plot <- df_234_clean %>%
   group_by(Cat, Score) %>%
+  filter(Score != 0) %>%
   tally()
+
+#make Score a factor (as opposed to numeric/integer)
 
 df_plot$Score <- as.factor(df_plot$Score)
 
-#Add in NA for zeroes to get consistant width, missing Animals 4
-animals_4 <- data.frame("Animals", as.factor(4), 0)
-colnames(animals_4) <- c("Cat", "Score", "n")
-df_plot <- rbind(df_plot, animals_4)
-
-ggplot(data = df_plot, aes(x=Cat, y = n, fill = Score)) +
+count_plot <- ggplot(data = df_plot, aes(x=Cat, y = n, fill = Score)) +
   geom_col(position = "dodge", colour="black") +
-  scale_fill_brewer(palette = "Accent") +
+  scale_fill_brewer(palette = "Dark2") +
   labs(
     x = "Category",
     y = "Count") +
@@ -51,36 +64,5 @@ ggplot(data = df_plot, aes(x=Cat, y = n, fill = Score)) +
                      limits = c(0,50)) +
   theme_classic(base_size = 18)
 
-
-#could also graph through time for each category
-df_plot_time <- df %>%
-  filter(!is.na(Notes)) %>%
-  filter(Notes != "1") %>%
-  filter(Notes != "") %>%
-  filter(Notes != "b") %>%
-  group_by(Cat, Score, Publication.Year) %>%
-  tally()
-
-df_plot_time2 = df_plot_time %>% group_by(Cat, Score) %>% arrange(Publication.Year) %>% mutate(cs = cumsum(n))
-
-#problem here is that cumulative sum for the publication counts is missing whatever the max was
-
-
-
-ggplot(data = df_plot_time2, aes(x=Publication.Year, y = cs, color = Score)) +
-  geom_line(size = 2) +
-  scale_color_brewer(palette = "Accent") +
-  facet_wrap(~Cat) +
-  labs(
-    x = "Year",
-    y = "Cumulative Count") +
-  theme_classic(base_size = 18)
-
-ggplot(data = df_plot_time2, aes(x=Publication.Year, y = n, color = Score)) +
-  geom_line(size = 2) +
-  scale_color_brewer(palette = "Accent") +
-  facet_wrap(~Cat) +
-  labs(
-    x = "Year",
-    y = "Cumulative Count") +
-  theme_classic(base_size = 18)
+#save plot
+ggsave("plots/count_plot.png", count_plot, width = 10, height = 6)
